@@ -1,0 +1,16 @@
+{
+    "name": "@reported/shared",
+    "version": "1.0.0",
+    "description": "Shared utilities and components for multiple projects",
+    "private": true,
+    "scripts": {
+        "build": "tsc",
+        "test": "jest"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "ts-node": "^10.9.2",
+        "typescript": "^5.7.3",
+        "jest": "^29.6.1"
+    }
+}
