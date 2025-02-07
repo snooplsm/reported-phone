@@ -1,0 +1,9 @@
+mutation PresignedUrls($keys: [PresignedUrlInput!]!) {
+  presignedUrls(keys: $keys) {
+    url
+    method
+    contentType
+    bucketName
+    key
+  }
+}

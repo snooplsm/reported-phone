@@ -1,0 +1,23 @@
+fragment ReportFields on Report {
+  id
+  complaint
+  time
+  created
+  location {
+    street
+    building_number
+    city
+    state
+    zip
+    coordinates {
+        lat
+        lng
+    }
+  }
+  files {
+    url
+    width
+    height
+    duration
+  }
+}

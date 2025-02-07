@@ -1,0 +1,5 @@
+mutation CreateReports($reports: [ReportInput!]!) {
+  createReport(reports: $reports) {
+    ...ReportFields
+  }
+}

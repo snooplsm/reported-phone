@@ -1,0 +1,5 @@
+fragment NeighborhoodFields on Neighborhood {
+    id
+    name
+    geojson
+}

@@ -1,0 +1,7 @@
+query GetAllNeighborhoods {
+  neighborhoods {
+    id
+    name
+    geojson
+  }
+}

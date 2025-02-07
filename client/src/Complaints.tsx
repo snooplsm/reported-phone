@@ -1,12 +1,7 @@
 import { Box, Paper, Typography } from "@mui/material"
 import { ChangeEvent, useRef } from "react"
 import { exifGetter, UsableExif } from "./FileUtils"
-
-export enum ComplaintType {
-    blocked_bike_lane = 'blocked bike lane',
-    blocked_crosswalk = 'blocked crosswalk',
-    missing_crosswalk = 'missing crosswalk'
-}
+import { ComplaintType } from "@reported/shared/src/ComplaintType";
 
 export interface Complaint {
     type: ComplaintType

@@ -7,7 +7,6 @@ interface GeoSearchProps {
     onChange?: (resp:GeoSearchResponse, value:Feature) => void
 }
 
-
 export const GeoSearchAutocomplete: React.FC<GeoSearchProps> = ({ onChange, initial }) => {
   const [open, setOpen] = useState(false);
   const [response, setResponse] = useState<GeoSearchResponse>();
@@ -15,14 +14,14 @@ export const GeoSearchAutocomplete: React.FC<GeoSearchProps> = ({ onChange, init
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
 
-  const [selectedValue, setSelectedValue] = useState<Feature>();
+  const [selectedValue, setSelectedValue] = useState<Feature|null>(null);
   const [inputValue, setInputValue] = useState<string>("");
 
   useEffect(() => {
     if (initial?.features?.length) {
       setOptions(initial.features);
       setSelectedValue(initial.features[0]);
-      setInputValue(initial.features[0]?.properties.label || "");
+      setInputValue(initial.features[0]?.properties.street_address || "");
     }
   }, [initial]);
 
@@ -36,8 +35,11 @@ export const GeoSearchAutocomplete: React.FC<GeoSearchProps> = ({ onChange, init
       if(strData) {
         data = JSON.parse(strData)
       } else {
+        const query = new URLSearchParams({
+          gatekeeperKey: '6ba4de64d6ca99aa4db3b9194e37adbf',
+        })
         const response = await fetch(
-          `https://api.phila.gov/ais_doc/v1/reverse_geocode/search/${encodeURIComponent(searchText)}`
+          `https://api.phila.gov/ais_doc/v1/search/${encodeURIComponent(searchText)}?${query.toString()}`
         );
         data= await response.json();
         localStorage.setItem(`autocomplete_${searchText.toLocaleLowerCase()}`, JSON.stringify(data))
@@ -54,7 +56,7 @@ export const GeoSearchAutocomplete: React.FC<GeoSearchProps> = ({ onChange, init
 
   const handleChange = (value?: Feature) => {
     setSelectedValue(value);
-    setInputValue(value?.properties.label || "");
+    setInputValue(value?.properties.street_address || "");
     if (onChange && response) {
       onChange(response, value);
     }
@@ -65,8 +67,8 @@ export const GeoSearchAutocomplete: React.FC<GeoSearchProps> = ({ onChange, init
       fetchGeoSearchResults(query);
     } else {
       setOptions(initial?.features || []);
-      setInputValue(initial?.features[0]?.properties.label || "");
-      setSelectedValue(initial?.features[0] || undefined);
+      setInputValue(initial?.features[0]?.properties.street_address || "");
+      setSelectedValue(initial?.features[0] || null);
     }
   }, [query, initial]);
 
@@ -81,7 +83,7 @@ export const GeoSearchAutocomplete: React.FC<GeoSearchProps> = ({ onChange, init
       freeSolo={true}
       loading={loading}
       onChange={(event, value) => handleChange(value)}
-      getOptionLabel={(option: any) => option?.properties?.label || ""}
+      getOptionLabel={(option: any) => option?.properties?.street_address || ""}
       onInputChange={(event, value, reason) => {
         if (reason !== "reset") {
           setQuery(value);
@@ -94,7 +96,7 @@ export const GeoSearchAutocomplete: React.FC<GeoSearchProps> = ({ onChange, init
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Search Philly Address"
+          label="Set Philly Address"
           variant="outlined"
           InputProps={{
             ...params.InputProps,
@@ -109,7 +111,7 @@ export const GeoSearchAutocomplete: React.FC<GeoSearchProps> = ({ onChange, init
       )}
       renderOption={(props, option) => (
         <li {...props}>
-          {option.properties.label} {/* Customize display */}
+          {option.properties.street_address} {/* Customize display */}
         </li>
       )}
     />

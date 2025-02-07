@@ -11,9 +11,9 @@ export interface Feature {
     coordinates: [number, number]; // [longitude, latitude]
   };
   properties: {
-    label: string; // Full address label
-    housenumber?: string; // House number
-    street_address?: string; // Street name
+    address_low?: string; // House number
+    street_full?: string;
+    street_address: string; // Street name
     distance?: number; // Distance from query point
     accuracy?: string; // Accuracy level
     point?: {
@@ -26,7 +26,7 @@ export interface Feature {
     neighborhood?: string; // Neighborhood name
     city?: string; // City name
     state?: string; // State name
-    postalcode?: string; // Postal code
+    zip_code?: string; // Postal code
     country?: string; // Country name
     confidence?: number; // Confidence level
   };

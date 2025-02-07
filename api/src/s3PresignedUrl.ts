@@ -1,8 +1,6 @@
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import dotenv from "dotenv";
-
-dotenv.config();
+import moment from "moment";
 
 // ✅ AWS S3 Configuration
 const s3Client = new S3Client({
@@ -21,7 +19,17 @@ export interface PresignedUrlRequest {
   expiresIn?: number;
 }
 
-// ✅ Function to Generate Pre-Signed URL
+const renameFile = (originalFilename: string) => {
+  const today = moment()
+  const fileExtension = originalFilename.split(".").pop();
+  // const today = new Date();
+  const year = today.format("YYYY")
+  const dayOfYear = today.format("DDD")
+  const timestamp = today.format("YYYYMMDDdddHHmmssSSS")
+
+  return `uploads/${year}/${dayOfYear}/${originalFilename.replace(/\s+/g, "-").toLowerCase()}`;
+};
+
 export const generatePresignedUrl = async ({
   key,
   contentType,
@@ -29,8 +37,10 @@ export const generatePresignedUrl = async ({
   operation = "PUT",
   expiresIn = 3000
 }: PresignedUrlRequest) => {
+  const fileName = renameFile(key)
   const command = operation === "PUT"
-    ? new PutObjectCommand({ Bucket: bucket, Key: key, ACL: "public-read", ContentType: contentType })
-    : new GetObjectCommand({ Bucket: bucket, Key: key});
-  return await getSignedUrl(s3Client, command, { expiresIn });
+    ? new PutObjectCommand({ Bucket: bucket, Key: fileName, ContentType: contentType, StorageClass: "GLACIER_IR" })
+    : new GetObjectCommand({ Bucket: bucket, Key: fileName});
+  return await {bucket, key: fileName, url:await getSignedUrl(s3Client, command, { expiresIn })};
 };
+

@@ -1,0 +1,5 @@
+query GetReportsForNeighborhood($filters: ReportFilterInput!) {
+  reportsForNeighborhood(filters: $filters) {
+    ...ReportFields
+  }
+}

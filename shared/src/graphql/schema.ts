@@ -1,4 +1,5 @@
-export const typeDefs = `#graphql
+import { gql } from "graphql-tag";
+export const typeDefs = gql`
 
   type Coordinates {
     lat: Float!
@@ -7,7 +8,11 @@ export const typeDefs = `#graphql
 
   scalar BigInt
 
+  scalar DateTime
+
   scalar StringMap
+
+  scalar JSON
 
   type Location {
     id: ID!
@@ -17,16 +22,26 @@ export const typeDefs = `#graphql
     city: String!
     state: String!
     zip: String!
-    created: String!
+    created: DateTime!
+  }
+
+  type Complaint {
+    name: String!
+  }
+
+  type Neighborhood {
+    id: ID!
+    name: String!
+    geojson: JSON!  
   }
 
   type Report {
     id: ID!
     complaint: String!
-    time: String!
-    created: String!
+    time: DateTime!
+    created: DateTime!
     location: Location!
-    files: [S3File]
+    files: [S3File!]!
   }
 
   type S3File {
@@ -41,31 +56,50 @@ export const typeDefs = `#graphql
     height: Int
     duration: Int
     parent: ID
-    created: String!
+    created: DateTime!
   }
 
   type PresignedUrl {
     url: String!
     method: String!
     contentType: String!
+    bucketName: String!
+    key: String!
   }
+
+  input ReportFilterInput {
+  neighborhood: String!
+  createdAfter: DateTime
+  complaint: String
+}
 
   type Query {
     reports: [Report]
     report(id: ID!): Report
+    reportsForNeighborhood(filters: ReportFilterInput!): [Report!]!
+    neighborhoods: [Neighborhood!]!
+    neighborhood(name: String!): Neighborhood
+    complaints: [Complaint!]!
   }
 
   type Mutation {
     createReport(
-      complaint: String!
-      time: String!
-      location: LocationInput!
-      files: [FileInput!]!
-    ): Report
+      reports: [ReportInput!]!
+    ): [Report!]!
+    deleteReport(
+      id: ID!
+    ): Boolean!
     presignedUrls(
       keys: [PresignedUrlInput!]!
-): [PresignedUrl]
+): [PresignedUrl!]!
   }
+
+  input ReportInput {
+    complaint: String!        
+    time: DateTime!             
+    location: LocationInput!  
+    files: [FileInput!]!
+}
 
   input PresignedUrlInput {
     key: String!
@@ -99,3 +133,5 @@ export const typeDefs = `#graphql
     parent: ID
   }
 `;
+
+export default typeDefs

@@ -1,0 +1,5 @@
+query GetNeighborhood($name: String!) {
+    neighborhood(name: $name) {
+      ...NeighborhoodFields
+    }
+  }

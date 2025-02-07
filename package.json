@@ -3,6 +3,11 @@
   "workspaces": [
     "api",
     "client",
-    "shared"
-  ]
+    "shared",
+    "data",
+    "s3/lambdas/resizer"
+  ],
+  "scripts": {
+    "deploy": "sh -c 'zip -r lambda.zip index.js node_modules package.json && aws lambda create-function --function-name ImageResizer --runtime nodejs18.x --role arn:aws:iam::your-account-id:role/lambda-role --handler index.handler --zip-file fileb://lambda.zip'"
+  }
 }
