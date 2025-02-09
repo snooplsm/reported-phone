@@ -95,8 +95,17 @@ if [[ "$LAMBDA_EXISTS" == "NO" ]]; then
     echo "✅ Lambda Function Created"
 else
     echo "✅ Lambda Function Exists: $LAMBDA_FUNCTION_NAME"
-    echo "🔹 Updating Lambda function..."
-    aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --zip-file fileb://lambda.zip
+fi
+
+STATUS=$(aws lambda get-function --function-name image-resizer --query "Configuration.LastUpdateStatus" --output text)
+
+if [[ "$STATUS" == "InProgress" ]]; then
+  echo "🔹 Lambda update in progress. Waiting..."
+  aws lambda wait function-updated --function-name image-resizer
+fi
+
+echo "✅ Updating Lambda function..."
+aws lambda update-function-code --function-name image-resizer --zip-file fileb://lambda.zip
     
     echo "🔹 Updating Lambda Layers..."
     aws lambda update-function-configuration \

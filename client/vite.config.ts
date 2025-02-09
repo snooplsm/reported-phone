@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
     ],        
     define: {
       'process.env.VITE_GRAPHQL': JSON.stringify(env.VITE_GRAPHQL),      
+      'process.env.VITE_WS_GRAPHQL': JSON.stringify(env.VITE_WS_GRAPHQL),      
     },
   };
 });

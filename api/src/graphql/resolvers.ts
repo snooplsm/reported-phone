@@ -11,21 +11,19 @@ import { GraphQLScalarType, Kind } from "graphql";
 import { DateTimeScalar } from "graphql-date-scalars";
 import Neighborhood from "../models/Neighborhood";
 import { complaintTypesJson } from "@reported/shared/src/ComplaintType";
-import { ReportInput } from  "@reported/shared/src/generated/graphql";
+import { ReportCreatedForNeighborhoodsSubscription, 
+  ReportCreatedForNeighborhoodsSubscriptionVariables,  ReportInput,
+  SubscriptionReportCreatedForNeighborhoodsArgs, } from  "@reported/shared/src/generated/graphql";
 import { StringMapScalar } from "./StringMapScalar"
+import { pub } from "./pub";
+import { withFilter } from "graphql-subscriptions";
 
 export const resolvers = {
   StringMap: StringMapScalar,
   DateTime: DateTimeScalar,
   Query: {
     reports: async () => {
-      return await Report.findAll({
-        include: [
-          { model: Location },
-          { model: S3File, as: "files", required: false }
-        ],
-        logging: console.log
-      }).then(x => {
+      return await Report.findAllWithLocations().then(x => {
         return x
       });
     },
@@ -33,7 +31,7 @@ export const resolvers = {
       return await Report.findByPk(id, {
         include: [
           { model: Location },
-          { model: ReportFile, include: [S3File] },
+          { model: S3File, as: "files", required: false }
         ],
       });
     },
@@ -56,14 +54,13 @@ export const resolvers = {
 
       return neighborhood;
     },
-    reportsForNeighborhood: async (_: any, { filters }: { filters: any }) => {
+    reportsForNeighborhoodCount: async (_: any, { filters}: {filters: any}) => {
       const { neighborhood, createdAfter, complaint } = filters;
 
-      const reports =  await Report.findAll({
+      const reports =  await Report.count({
         include: [
           {
             model: Location,
-            required: true,
           },
           { model: S3File, as: "files", required: false }
         ],
@@ -78,13 +75,52 @@ export const resolvers = {
           `),
         },
       });
+      return reports
+    },
+    reportsForNeighborhood: async (_: any, { filters }: { filters: any }) => {
+      const { neighborhood, createdAfter, complaint } = filters;
 
-      console.log(JSON.stringify(reports))
-
+      const reports =  await Report.findAllWithLocations(
+        {
+          ...(createdAfter && { created: { [Op.gte]: createdAfter } }),
+          ...(complaint && { complaint }),
+          [Op.and]: sequelize.literal(`
+            ST_Contains(
+              (SELECT geojson FROM neighborhoods WHERE name ILIKE '${neighborhood}' LIMIT 1),
+              location.geometry
+            )
+          `),
+      });
+      pub.publish("REPORT_CREATED", reports)
       return reports
     }
   },
-
+  Subscription: {
+    reportCreated: {
+      subscribe: 
+        pub.asyncIterableIterator(["REPORT_CREATED"])
+      ,
+      resolve: (payload:any)=> {
+        console.log("🚀 Report Created Event:", payload);
+        return payload; // ✅ Should return a single object, NOT an array
+      }
+    },
+    reportCreatedForNeighborhoods: {
+      subscribe: withFilter(
+        () => pub.asyncIterableIterator(["REPORT_CREATED_FOR_NEIGHBORHOODS"]),
+        (
+          payload: any,
+          variables: any
+        ) => {
+          console.log("payload", payload)
+          console.log("variables",variables)
+          return true
+        }
+      ),
+    },
+  
+  },
+  
   Mutation: {
     deleteReport: async (_: any, { id }: { id: number }) => {
       return await sequelize.transaction(async (transaction) => {
@@ -206,17 +242,37 @@ export const resolvers = {
           createdReports.push(report);
         }
 
-        return await Report.findAll({
-          where: {
-            id: {
-              [Op.in]: createdReports.map(x => x.id)
-            }
-          },
-          include: [
-            { model: Location },
-            { model: ReportFile, include: [S3File] },
-          ],
-        });
+          
+        return createdReports
+      }).then(async (reports)=> {
+        const reported = await Report.findAllWithLocations({
+          id: {
+            [Op.in]: reports.map(x => x.id)
+          }
+        });      
+        setImmediate(async () => {
+          const reportsByNeighborhood = reported.reduce((acc, report) => {
+            const neighborhoods = (report.get("location") as Location)?.neighborhoods || [];
+          
+            neighborhoods.forEach((neighborhood) => {
+              if (!acc[neighborhood]) {
+                acc[neighborhood] = []; // ✅ Initialize as an array
+              }
+              acc[neighborhood].push(report); // ✅ Push the report into the array
+            });
+          
+            return acc;
+          }, {} as Record<string, Report[]>); // ✅ Corrected type
+
+          for (const [neighborhood, reports] of Object.entries(reportsByNeighborhood)) {
+            console.log(`Publishing ${reports.length} reports for ${neighborhood}`);
+            const payload: { reportCreatedForNeighborhoods: Report[] } = {
+              reportCreatedForNeighborhoods: reports,
+            };
+            await pub.publish("REPORT_CREATED_FOR_NEIGHBORHOODS", payload);
+          }
+        })
+        return reported
       });
     },
     presignedUrls: async (_parent: any, { keys }: {

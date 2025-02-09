@@ -57,6 +57,7 @@ export type Location = {
   coordinates: Coordinates;
   created: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
+  neighborhoods?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   state: Scalars['String']['output'];
   street?: Maybe<Scalars['String']['output']>;
   zip: Scalars['String']['output'];
@@ -74,12 +75,18 @@ export type LocationInput = {
 export type Mutation = {
   __typename?: 'Mutation';
   createReport: Array<Report>;
+  deleteReport: Scalars['Boolean']['output'];
   presignedUrls: Array<PresignedUrl>;
 };
 
 
 export type MutationCreateReportArgs = {
   reports: Array<ReportInput>;
+};
+
+
+export type MutationDeleteReportArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -116,6 +123,7 @@ export type Query = {
   report?: Maybe<Report>;
   reports?: Maybe<Array<Maybe<Report>>>;
   reportsForNeighborhood: Array<Report>;
+  reportsForNeighborhoodCount: Scalars['BigInt']['output'];
 };
 
 
@@ -130,6 +138,11 @@ export type QueryReportArgs = {
 
 
 export type QueryReportsForNeighborhoodArgs = {
+  filters: ReportFilterInput;
+};
+
+
+export type QueryReportsForNeighborhoodCountArgs = {
   filters: ReportFilterInput;
 };
 
@@ -172,18 +185,36 @@ export type S3File = {
   width?: Maybe<Scalars['Int']['output']>;
 };
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  reportCreated: Array<Report>;
+  reportCreatedForNeighborhoods: Array<Report>;
+};
+
+
+export type SubscriptionReportCreatedForNeighborhoodsArgs = {
+  neighborhoods: Array<Scalars['String']['input']>;
+};
+
 export type ComplaintFieldsFragment = { __typename?: 'Complaint', name: string };
 
 export type NeighborhoodFieldsFragment = { __typename?: 'Neighborhood', id: string, name: string, geojson: any };
 
-export type ReportFieldsFragment = { __typename?: 'Report', id: string, complaint: string, time: any, created: any, location: { __typename?: 'Location', street?: string | null, building_number?: string | null, city: string, state: string, zip: string, coordinates: { __typename?: 'Coordinates', lat: number, lng: number } }, files: Array<{ __typename?: 'S3File', url: string, width?: number | null, height?: number | null, duration?: number | null }> };
+export type ReportFieldsFragment = { __typename?: 'Report', id: string, complaint: string, time: any, created: any, location: { __typename?: 'Location', street?: string | null, building_number?: string | null, city: string, state: string, zip: string, neighborhoods?: Array<string | null> | null, coordinates: { __typename?: 'Coordinates', lat: number, lng: number } }, files: Array<{ __typename?: 'S3File', url: string, width?: number | null, height?: number | null, duration?: number | null }> };
 
 export type CreateReportsMutationVariables = Exact<{
   reports: Array<ReportInput> | ReportInput;
 }>;
 
 
-export type CreateReportsMutation = { __typename?: 'Mutation', createReport: Array<{ __typename?: 'Report', id: string, complaint: string, time: any, created: any, location: { __typename?: 'Location', street?: string | null, building_number?: string | null, city: string, state: string, zip: string, coordinates: { __typename?: 'Coordinates', lat: number, lng: number } }, files: Array<{ __typename?: 'S3File', url: string, width?: number | null, height?: number | null, duration?: number | null }> }> };
+export type CreateReportsMutation = { __typename?: 'Mutation', createReport: Array<{ __typename?: 'Report', id: string, complaint: string, time: any, created: any, location: { __typename?: 'Location', street?: string | null, building_number?: string | null, city: string, state: string, zip: string, neighborhoods?: Array<string | null> | null, coordinates: { __typename?: 'Coordinates', lat: number, lng: number } }, files: Array<{ __typename?: 'S3File', url: string, width?: number | null, height?: number | null, duration?: number | null }> }> };
+
+export type PresignedUrlsMutationVariables = Exact<{
+  keys: Array<PresignedUrlInput> | PresignedUrlInput;
+}>;
+
+
+export type PresignedUrlsMutation = { __typename?: 'Mutation', presignedUrls: Array<{ __typename?: 'PresignedUrl', url: string, method: string, contentType: string, bucketName: string, key: string }> };
 
 export type GetAllComplaintsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -202,19 +233,24 @@ export type GetNeighborhoodQueryVariables = Exact<{
 
 export type GetNeighborhoodQuery = { __typename?: 'Query', neighborhood?: { __typename?: 'Neighborhood', id: string, name: string, geojson: any } | null };
 
-export type PresignedUrlsMutationVariables = Exact<{
-  keys: Array<PresignedUrlInput> | PresignedUrlInput;
-}>;
-
-
-export type PresignedUrlsMutation = { __typename?: 'Mutation', presignedUrls: Array<{ __typename?: 'PresignedUrl', url: string, method: string, contentType: string, bucketName: string, key: string }> };
-
 export type GetReportsForNeighborhoodQueryVariables = Exact<{
   filters: ReportFilterInput;
 }>;
 
 
-export type GetReportsForNeighborhoodQuery = { __typename?: 'Query', reportsForNeighborhood: Array<{ __typename?: 'Report', id: string, complaint: string, time: any, created: any, location: { __typename?: 'Location', street?: string | null, building_number?: string | null, city: string, state: string, zip: string, coordinates: { __typename?: 'Coordinates', lat: number, lng: number } }, files: Array<{ __typename?: 'S3File', url: string, width?: number | null, height?: number | null, duration?: number | null }> }> };
+export type GetReportsForNeighborhoodQuery = { __typename?: 'Query', reportsForNeighborhood: Array<{ __typename?: 'Report', id: string, complaint: string, time: any, created: any, location: { __typename?: 'Location', street?: string | null, building_number?: string | null, city: string, state: string, zip: string, neighborhoods?: Array<string | null> | null, coordinates: { __typename?: 'Coordinates', lat: number, lng: number } }, files: Array<{ __typename?: 'S3File', url: string, width?: number | null, height?: number | null, duration?: number | null }> }> };
+
+export type ReportCreatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ReportCreatedSubscription = { __typename?: 'Subscription', reportCreated: Array<{ __typename?: 'Report', id: string, complaint: string, time: any, created: any, location: { __typename?: 'Location', street?: string | null, building_number?: string | null, city: string, state: string, zip: string, neighborhoods?: Array<string | null> | null, coordinates: { __typename?: 'Coordinates', lat: number, lng: number } }, files: Array<{ __typename?: 'S3File', url: string, width?: number | null, height?: number | null, duration?: number | null }> }> };
+
+export type ReportCreatedForNeighborhoodsSubscriptionVariables = Exact<{
+  neighborhoods: Array<Scalars['String']['input']> | Scalars['String']['input'];
+}>;
+
+
+export type ReportCreatedForNeighborhoodsSubscription = { __typename?: 'Subscription', reportCreatedForNeighborhoods: Array<{ __typename?: 'Report', id: string, complaint: string, time: any, created: any, location: { __typename?: 'Location', street?: string | null, building_number?: string | null, city: string, state: string, zip: string, neighborhoods?: Array<string | null> | null, coordinates: { __typename?: 'Coordinates', lat: number, lng: number } }, files: Array<{ __typename?: 'S3File', url: string, width?: number | null, height?: number | null, duration?: number | null }> }> };
 
 export const ComplaintFieldsFragmentDoc = gql`
     fragment ComplaintFields on Complaint {
@@ -244,6 +280,7 @@ export const ReportFieldsFragmentDoc = gql`
       lat
       lng
     }
+    neighborhoods
   }
   files {
     url
@@ -286,6 +323,43 @@ export function useCreateReportsMutation(baseOptions?: Apollo.MutationHookOption
 export type CreateReportsMutationHookResult = ReturnType<typeof useCreateReportsMutation>;
 export type CreateReportsMutationResult = Apollo.MutationResult<CreateReportsMutation>;
 export type CreateReportsMutationOptions = Apollo.BaseMutationOptions<CreateReportsMutation, CreateReportsMutationVariables>;
+export const PresignedUrlsDocument = gql`
+    mutation PresignedUrls($keys: [PresignedUrlInput!]!) {
+  presignedUrls(keys: $keys) {
+    url
+    method
+    contentType
+    bucketName
+    key
+  }
+}
+    `;
+export type PresignedUrlsMutationFn = Apollo.MutationFunction<PresignedUrlsMutation, PresignedUrlsMutationVariables>;
+
+/**
+ * __usePresignedUrlsMutation__
+ *
+ * To run a mutation, you first call `usePresignedUrlsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePresignedUrlsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [presignedUrlsMutation, { data, loading, error }] = usePresignedUrlsMutation({
+ *   variables: {
+ *      keys: // value for 'keys'
+ *   },
+ * });
+ */
+export function usePresignedUrlsMutation(baseOptions?: Apollo.MutationHookOptions<PresignedUrlsMutation, PresignedUrlsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<PresignedUrlsMutation, PresignedUrlsMutationVariables>(PresignedUrlsDocument, options);
+      }
+export type PresignedUrlsMutationHookResult = ReturnType<typeof usePresignedUrlsMutation>;
+export type PresignedUrlsMutationResult = Apollo.MutationResult<PresignedUrlsMutation>;
+export type PresignedUrlsMutationOptions = Apollo.BaseMutationOptions<PresignedUrlsMutation, PresignedUrlsMutationVariables>;
 export const GetAllComplaintsDocument = gql`
     query GetAllComplaints {
   complaints {
@@ -406,43 +480,6 @@ export type GetNeighborhoodQueryHookResult = ReturnType<typeof useGetNeighborhoo
 export type GetNeighborhoodLazyQueryHookResult = ReturnType<typeof useGetNeighborhoodLazyQuery>;
 export type GetNeighborhoodSuspenseQueryHookResult = ReturnType<typeof useGetNeighborhoodSuspenseQuery>;
 export type GetNeighborhoodQueryResult = Apollo.QueryResult<GetNeighborhoodQuery, GetNeighborhoodQueryVariables>;
-export const PresignedUrlsDocument = gql`
-    mutation PresignedUrls($keys: [PresignedUrlInput!]!) {
-  presignedUrls(keys: $keys) {
-    url
-    method
-    contentType
-    bucketName
-    key
-  }
-}
-    `;
-export type PresignedUrlsMutationFn = Apollo.MutationFunction<PresignedUrlsMutation, PresignedUrlsMutationVariables>;
-
-/**
- * __usePresignedUrlsMutation__
- *
- * To run a mutation, you first call `usePresignedUrlsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `usePresignedUrlsMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [presignedUrlsMutation, { data, loading, error }] = usePresignedUrlsMutation({
- *   variables: {
- *      keys: // value for 'keys'
- *   },
- * });
- */
-export function usePresignedUrlsMutation(baseOptions?: Apollo.MutationHookOptions<PresignedUrlsMutation, PresignedUrlsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<PresignedUrlsMutation, PresignedUrlsMutationVariables>(PresignedUrlsDocument, options);
-      }
-export type PresignedUrlsMutationHookResult = ReturnType<typeof usePresignedUrlsMutation>;
-export type PresignedUrlsMutationResult = Apollo.MutationResult<PresignedUrlsMutation>;
-export type PresignedUrlsMutationOptions = Apollo.BaseMutationOptions<PresignedUrlsMutation, PresignedUrlsMutationVariables>;
 export const GetReportsForNeighborhoodDocument = gql`
     query GetReportsForNeighborhood($filters: ReportFilterInput!) {
   reportsForNeighborhood(filters: $filters) {
@@ -483,3 +520,62 @@ export type GetReportsForNeighborhoodQueryHookResult = ReturnType<typeof useGetR
 export type GetReportsForNeighborhoodLazyQueryHookResult = ReturnType<typeof useGetReportsForNeighborhoodLazyQuery>;
 export type GetReportsForNeighborhoodSuspenseQueryHookResult = ReturnType<typeof useGetReportsForNeighborhoodSuspenseQuery>;
 export type GetReportsForNeighborhoodQueryResult = Apollo.QueryResult<GetReportsForNeighborhoodQuery, GetReportsForNeighborhoodQueryVariables>;
+export const ReportCreatedDocument = gql`
+    subscription ReportCreated {
+  reportCreated {
+    ...ReportFields
+  }
+}
+    ${ReportFieldsFragmentDoc}`;
+
+/**
+ * __useReportCreatedSubscription__
+ *
+ * To run a query within a React component, call `useReportCreatedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useReportCreatedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useReportCreatedSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useReportCreatedSubscription(baseOptions?: Apollo.SubscriptionHookOptions<ReportCreatedSubscription, ReportCreatedSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<ReportCreatedSubscription, ReportCreatedSubscriptionVariables>(ReportCreatedDocument, options);
+      }
+export type ReportCreatedSubscriptionHookResult = ReturnType<typeof useReportCreatedSubscription>;
+export type ReportCreatedSubscriptionResult = Apollo.SubscriptionResult<ReportCreatedSubscription>;
+export const ReportCreatedForNeighborhoodsDocument = gql`
+    subscription ReportCreatedForNeighborhoods($neighborhoods: [String!]!) {
+  reportCreatedForNeighborhoods(neighborhoods: $neighborhoods) {
+    ...ReportFields
+  }
+}
+    ${ReportFieldsFragmentDoc}`;
+
+/**
+ * __useReportCreatedForNeighborhoodsSubscription__
+ *
+ * To run a query within a React component, call `useReportCreatedForNeighborhoodsSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useReportCreatedForNeighborhoodsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useReportCreatedForNeighborhoodsSubscription({
+ *   variables: {
+ *      neighborhoods: // value for 'neighborhoods'
+ *   },
+ * });
+ */
+export function useReportCreatedForNeighborhoodsSubscription(baseOptions: Apollo.SubscriptionHookOptions<ReportCreatedForNeighborhoodsSubscription, ReportCreatedForNeighborhoodsSubscriptionVariables> & ({ variables: ReportCreatedForNeighborhoodsSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<ReportCreatedForNeighborhoodsSubscription, ReportCreatedForNeighborhoodsSubscriptionVariables>(ReportCreatedForNeighborhoodsDocument, options);
+      }
+export type ReportCreatedForNeighborhoodsSubscriptionHookResult = ReturnType<typeof useReportCreatedForNeighborhoodsSubscription>;
+export type ReportCreatedForNeighborhoodsSubscriptionResult = Apollo.SubscriptionResult<ReportCreatedForNeighborhoodsSubscription>;

@@ -1,5 +1,7 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Sequelize, WhereOptions } from "sequelize";
 import { sequelize } from "../database";
+import { S3File } from "./S3File";
+import { Location } from "./Location"
 
 export class Report extends Model {
   public id!: number;
@@ -7,6 +9,29 @@ export class Report extends Model {
   public time!: Date;
   public location_id!: number;
   public readonly created!: Date;
+
+  static async findAllWithLocations(where: WhereOptions<Report> = {}) {
+    return await Report.findAll({
+      where, // ✅ Uses `{}` if no condition is passed
+      include: [
+        {
+          model: Location,
+          attributes: {
+            include: [
+              [
+                Sequelize.literal(`(
+                  SELECT ARRAY_AGG(name) FROM neighborhoods 
+                  WHERE ST_Contains(neighborhoods.geojson, location.geometry)
+                )`),
+                "neighborhoods",
+              ],
+            ],
+          },
+        },
+        { model: S3File, as: "files", required: false },
+      ],
+    });
+  }
 }
 
 Report.init(
@@ -20,7 +45,7 @@ Report.init(
     location_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: "locations", key: "id" }, // Foreign key reference
+      references: { model: "location", key: "id" }, // Foreign key reference
       onDelete: "CASCADE",
     },
     created: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },

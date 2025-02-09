@@ -16,7 +16,6 @@ export const ReportsMap = ({ reports = [], neighborhood }: ReportsMapProps) => {
     const [map, setMap] = useState<L.Map | null>(null)
 
     useEffect(() => {
-        console.log(reports)
         if(reports.length>0 && neighborhood==null) {
             const bounds = new LatLngBounds(reports.map(x=>x.location.coordinates).map(l=>new LatLng(l.lat,l.lng)))
             if(map) {
@@ -27,7 +26,6 @@ export const ReportsMap = ({ reports = [], neighborhood }: ReportsMapProps) => {
     }, [reports, map])
 
     useEffect(()=> {
-        console.log(neighborhood,"neighborhood")
         if(neighborhood && neighborhood.geojson) {
             const lats:LatLng[] = []
             neighborhood.geojson.coordinates.forEach(coord=> {
@@ -103,7 +101,7 @@ export const ReportsMap = ({ reports = [], neighborhood }: ReportsMapProps) => {
             <TableRow key={complaint.id}>
               <TableCell>
                 <OverflowMenu onDelete={()=> {
-                    
+
                 }}/>
                 </TableCell>
               <TableCell>{complaint.location.building_number} {complaint.location.street}</TableCell>

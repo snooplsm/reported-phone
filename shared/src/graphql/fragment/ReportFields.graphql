@@ -13,6 +13,7 @@ fragment ReportFields on Report {
         lat
         lng
     }
+    neighborhoods
   }
   files {
     url

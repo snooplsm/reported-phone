@@ -1,16 +1,9 @@
 import { BuildableComplaint } from "./App";
 
 import { client } from './ApolloClient'
-import { PresignedUrlInput, Mut, PresignedUrlsDocument, PresignedUrlsMutation, PresignedUrl, CreateReportsMutation, CreateReportsDocument, Report, ReportInput, LocationInput, CoordinatesInput, FileInput, GetAllNeighborhoodsQuery, GetAllNeighborhoodsDocument, GetReportsForNeighborhoodQuery, GetReportsForNeighborhoodDocument, ReportFilterInput, ReportFieldsFragment, NeighborhoodFieldsFragment, GetNeighborhoodQuery, GetNeighborhoodDocument, GetAllComplaintsQuery, GetAllComplaintsDocument, ComplaintFieldsFragment } from "@reported/shared/src/generated/graphql.ts";
+import { PresignedUrlsDocument, PresignedUrlsMutation, Report, PresignedUrl, CreateReportsMutation, CreateReportsDocument, ReportInput, LocationInput, CoordinatesInput, FileInput, GetReportsForNeighborhoodQuery, GetReportsForNeighborhoodDocument, ReportFilterInput, ReportFieldsFragment, NeighborhoodFieldsFragment, GetNeighborhoodQuery, GetNeighborhoodDocument, GetAllComplaintsQuery, GetAllComplaintsDocument, ComplaintFieldsFragment, useReportCreatedSubscription, ReportCreatedSubscription, ReportCreatedDocument, SubscriptionReportCreatedForNeighborhoodsArgs, ReportCreatedForNeighborhoodsDocument, ReportCreatedForNeighborhoodsSubscription } from "@reported/shared/src/generated/graphql.ts";
 
-import axios from "axios";
 import { ReportsParams } from "./Reports";
-
-axios.interceptors.request.use((config) => {
-    console.log("🚀 Final Headers Before Sending:", config.headers);
-    return config;
-});
-
 
 const saveBlobToFile = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
@@ -61,6 +54,40 @@ const uploadFileXHR = (file: File, presignedUrl: PresignedUrl) => {
     });
 };
 
+// ✅ Function to Handle Report Subscription (Decoupled from React)
+export function subscribeToReports(
+    neighborhoods:string[],
+    callback: (data: ReportFieldsFragment[]) => void,
+    onError?: (error: any) => void
+  ) {
+    const observable = client.subscribe<ReportCreatedForNeighborhoodsSubscription>({
+      query: ReportCreatedForNeighborhoodsDocument,
+      variables: {
+        neighborhoods: neighborhoods
+      } as SubscriptionReportCreatedForNeighborhoodsArgs
+    });
+
+  
+    // ✅ Start the Subscription
+    const subscription = observable.subscribe({
+      next: ({ data }) => {
+        if (data?.reportCreatedForNeighborhoods) {
+          callback(data.reportCreatedForNeighborhoods);
+        }
+      },
+      error: (err) => {
+        if (onError) onError(err);
+      },
+    });
+  
+    // ✅ Return Unsubscribe Function
+    return {
+      unsubscribe: () => {
+        console.log("🔄 Unsubscribing from report updates...");
+        subscription.unsubscribe();
+      },
+    };
+  }
 const uploadFile = async (file: File, u: PresignedUrl): Promise<boolean> => {
     const response = await uploadFileXHR(file, u)
     return response

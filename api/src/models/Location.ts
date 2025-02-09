@@ -10,6 +10,7 @@ export class Location extends Model {
   public state!: string;
   public zip!: string;
   public readonly created!: Date;
+  public neighborhoods?: string[];
 
   // ✅ Return coordinates inside an object
   get coordinates(): { lat: number; lng: number } {
@@ -55,6 +56,12 @@ Location.init(
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    neighborhoods: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.getDataValue("neighborhoods");
+      },
+    }
   },
   {
     sequelize,

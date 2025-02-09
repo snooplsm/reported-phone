@@ -19,6 +19,7 @@ export const typeDefs = gql`
     coordinates: Coordinates!
     street: String
     building_number: String
+    neighborhoods: [String]
     city: String!
     state: String!
     zip: String!
@@ -77,6 +78,7 @@ export const typeDefs = gql`
     reports: [Report]
     report(id: ID!): Report
     reportsForNeighborhood(filters: ReportFilterInput!): [Report!]!
+    reportsForNeighborhoodCount(filters: ReportFilterInput!): BigInt!
     neighborhoods: [Neighborhood!]!
     neighborhood(name: String!): Neighborhood
     complaints: [Complaint!]!
@@ -92,6 +94,11 @@ export const typeDefs = gql`
     presignedUrls(
       keys: [PresignedUrlInput!]!
 ): [PresignedUrl!]!
+  }
+
+  type Subscription {
+    reportCreated: [Report!]!
+    reportCreatedForNeighborhoods(neighborhoods: [String!]!): [Report!]!
   }
 
   input ReportInput {

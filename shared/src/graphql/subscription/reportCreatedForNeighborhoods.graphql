@@ -1,0 +1,5 @@
+subscription ReportCreatedForNeighborhoods($neighborhoods: [String!]!) {
+  reportCreatedForNeighborhoods(neighborhoods: $neighborhoods) {
+    ...ReportFields
+  }
+}

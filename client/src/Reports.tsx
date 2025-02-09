@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getComplaints, getNeighborhood, getReports } from "./Api";
+import { getComplaints, getNeighborhood, getReports, subscribeToReports } from "./Api";
 import { ComplaintType } from "@reported/shared/src/ComplaintType";
 import {ComplaintFieldsFragment, NeighborhoodFieldsFragment, ReportFieldsFragment } from "@reported/shared/src/generated/graphql";
 import { ReportsMap } from "./ReportsMap";
@@ -19,6 +19,16 @@ export const Reports = () => {
     const [reports, setReports] = useState<ReportFieldsFragment[]>([])
     const [neighborhood, setNeighborhood] = useState<NeighborhoodFieldsFragment>()
     const [complaints, setComplaints] = useState<ComplaintFieldsFragment[]>()
+    
+    useEffect(() => {
+        console.log("Subscribing to report updates")
+        const sub = subscribeToReports([params.neighborhood || "East Kensington"],(reports)=> {
+            console.log("new reports", reports)
+        }, ()=> {})
+        return () => {
+            sub.unsubscribe();
+        }
+    }, [params])
 
     useEffect(()=> {
         if (!params.complaint || !params.neighborhood) {
