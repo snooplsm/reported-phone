@@ -1,0 +1,20 @@
+{
+  "name": "graphql",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/handler.js",
+  "outDir": "./dist",
+  "rootDir": "./src",
+  "scripts": {
+    "build": "npx tsc",
+    "deploy": "npx tsc && cd dist && zip -r lambda.zip . && aws lambda update-function-code --function-name ReportedGraphql --zip-file fileb://lambda.zip"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.13.1",
+    "typescript": "^5.7.3"
+  }
+}

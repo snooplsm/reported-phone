@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { UsableExif } from './FileUtils';
 import { LoadingButton } from "@mui/lab";
 import { uploadReport } from './Api';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, Link, useNavigate } from 'react-router-dom';
 
 export interface BuildableComplaint {
   complaint: Complaint,
@@ -35,6 +35,11 @@ function App() {
     })
   }
 
+  const reportsUrl = generatePath("/reports/:neighborhoods/:complaints", {
+    neighborhoods: "Fishtown|East Kensington",
+    complaints: ""
+  })
+
   const onFiles = async (complaint: Complaint, files: UsableExif[]) => {
     let existing = complaints.find(x => x.complaint == complaint)
     const newComplaints = [...complaints]
@@ -60,6 +65,11 @@ function App() {
 
   return (
     <><Box>
+      <Box sx={{
+        padding: 1
+      }}>
+        <Link to={reportsUrl}>Reports</Link>
+      </Box>
       <Complaints onFiles={onFiles} />
       <Box sx={{
         alignItems: 'center'

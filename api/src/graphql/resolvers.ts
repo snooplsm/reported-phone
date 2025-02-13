@@ -7,20 +7,48 @@ import { v4 as uuidv4 } from "uuid";
 import { Op } from "sequelize";
 import { generatePresignedUrl } from "../s3PresignedUrl";
 
-import { GraphQLScalarType, Kind } from "graphql";
-import { DateTimeScalar } from "graphql-date-scalars";
 import Neighborhood from "../models/Neighborhood";
 import { complaintTypesJson } from "@reported/shared/src/ComplaintType";
-import { ReportCreatedForNeighborhoodsSubscription, 
-  ReportCreatedForNeighborhoodsSubscriptionVariables,  ReportInput,
-  SubscriptionReportCreatedForNeighborhoodsArgs, } from  "@reported/shared/src/generated/graphql";
-import { StringMapScalar } from "./StringMapScalar"
-import { pub } from "./pub";
-import { withFilter } from "graphql-subscriptions";
+import {
+   ReportFilterInput,  ReportInput,
+  } from  "@reported/shared/src/generated/graphql";
 
+
+
+
+const isAWS = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+let pub: any = null; // ✅ Only initialize in local mode
+
+const { PubSub, withFilter } = isAWS ? {} : require("graphql-subscriptions");
+
+let Subscription:object = {}
+if (!isAWS) {  
+    pub = new PubSub();
+    Subscription = {
+        reportCreated: {
+          subscribe: () => pub!.asyncIterator(["REPORT_CREATED"]),
+          resolve: (payload: any) => {
+            console.log("🚀 Report Created Event:", payload);
+            return payload; // ✅ Should return a single object, NOT an array
+          },
+        },
+        reportCreatedForNeighborhoods: {
+          subscribe: withFilter(
+            () => pub!.asyncIterator(["REPORT_CREATED_FOR_NEIGHBORHOODS"]),
+            (payload: any, variables: any) => {
+              console.log("payload", payload);
+              console.log("variables", variables);
+              return true; // ✅ Apply custom filtering logic here
+            }
+          ),
+        },
+    }
+  } else {
+  Subscription = {}
+}
+  
 export const resolvers = {
-  StringMap: StringMapScalar,
-  DateTime: DateTimeScalar,
+  Subscription,
   Query: {
     reports: async () => {
       return await Report.findAllWithLocations().then(x => {
@@ -43,19 +71,23 @@ export const resolvers = {
       const neighborhoods = await Neighborhood.findAll()
       return neighborhoods
     },
-    neighborhood: async (_: any, { name }: { name: string }) => {
-      const neighborhood = await Neighborhood.findOne({
+    neighborhood: async (_: any, { names }: { names: string[] }) => {
+      if (!Array.isArray(names) || names.length === 0) {
+        throw new Error("Invalid or empty names array");
+      }
+    
+      const neighborhoods = await Neighborhood.findAll({
         where: {
-          name: {
-            [Op.iLike]: `%${name}%` // Case-insensitive search
-          }
-        },
+          [Op.or]: names.map(n => ({
+            name: { [Op.iLike]: `%${n}%` } // Case-insensitive search for each name
+          }))
+        }
       });
-
-      return neighborhood;
+    
+      return neighborhoods;
     },
-    reportsForNeighborhoodCount: async (_: any, { filters}: {filters: any}) => {
-      const { neighborhood, createdAfter, complaint } = filters;
+    reportsForNeighborhoodCount: async (_: any, { filters}: {filters: ReportFilterInput}) => {
+      const { neighborhoods, createdAfter, createdBefore, complaints } = filters;
 
       const reports =  await Report.count({
         include: [
@@ -66,28 +98,36 @@ export const resolvers = {
         ],
         where: {
           ...(createdAfter && { created: { [Op.gte]: createdAfter } }),
-          ...(complaint && { complaint }),
+          ...(createdBefore && { created: { [Op.lte]: createdBefore } }),
+          ...(complaints && { complaint: { [Op.in]: complaints } }), // Make complaints a list of OR conditions
           [Op.and]: sequelize.literal(`
-            ST_Contains(
-              (SELECT geojson FROM neighborhoods WHERE name ILIKE '${neighborhood}' LIMIT 1),
-              location.geometry
+            EXISTS (
+              SELECT 1 FROM neighborhoods 
+              WHERE neighborhoods.name ILIKE ANY (ARRAY[${neighborhoods
+                .map((n) => sequelize.escape(`%${n}%`))
+                .join(",")}])
+              AND ST_Contains(neighborhoods.geojson, location.geometry)
             )
           `),
-        },
+        }
       });
       return reports
     },
-    reportsForNeighborhood: async (_: any, { filters }: { filters: any }) => {
-      const { neighborhood, createdAfter, complaint } = filters;
+    reportsForNeighborhood: async (_: any, { filters }: { filters: ReportFilterInput }) => {
+      const { neighborhoods, createdAfter, complaints, createdBefore } = filters;
 
       const reports =  await Report.findAllWithLocations(
         {
           ...(createdAfter && { created: { [Op.gte]: createdAfter } }),
-          ...(complaint && { complaint }),
+          ...(createdBefore && { created: { [Op.lte]: createdBefore } }),
+          ...(complaints && { complaint: { [Op.in]: complaints } }), // Make complaints a list of OR conditions
           [Op.and]: sequelize.literal(`
-            ST_Contains(
-              (SELECT geojson FROM neighborhoods WHERE name ILIKE '${neighborhood}' LIMIT 1),
-              location.geometry
+            EXISTS (
+              SELECT 1 FROM neighborhoods 
+              WHERE neighborhoods.name ILIKE ANY (ARRAY[${neighborhoods
+                .map((n) => sequelize.escape(`%${n}%`))
+                .join(",")}])
+              AND ST_Contains(neighborhoods.geojson, location.geometry)
             )
           `),
       });
@@ -95,31 +135,7 @@ export const resolvers = {
       return reports
     }
   },
-  Subscription: {
-    reportCreated: {
-      subscribe: 
-        pub.asyncIterableIterator(["REPORT_CREATED"])
-      ,
-      resolve: (payload:any)=> {
-        console.log("🚀 Report Created Event:", payload);
-        return payload; // ✅ Should return a single object, NOT an array
-      }
-    },
-    reportCreatedForNeighborhoods: {
-      subscribe: withFilter(
-        () => pub.asyncIterableIterator(["REPORT_CREATED_FOR_NEIGHBORHOODS"]),
-        (
-          payload: any,
-          variables: any
-        ) => {
-          console.log("payload", payload)
-          console.log("variables",variables)
-          return true
-        }
-      ),
-    },
   
-  },
   
   Mutation: {
     deleteReport: async (_: any, { id }: { id: number }) => {

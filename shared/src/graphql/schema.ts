@@ -69,9 +69,10 @@ export const typeDefs = gql`
   }
 
   input ReportFilterInput {
-  neighborhood: String!
+  neighborhoods: [String!]!
   createdAfter: DateTime
-  complaint: String
+  createdBefore: DateTime
+  complaints: [String!]!
 }
 
   type Query {
@@ -80,7 +81,7 @@ export const typeDefs = gql`
     reportsForNeighborhood(filters: ReportFilterInput!): [Report!]!
     reportsForNeighborhoodCount(filters: ReportFilterInput!): BigInt!
     neighborhoods: [Neighborhood!]!
-    neighborhood(name: String!): Neighborhood
+    neighborhood(names: [String!]!): [Neighborhood!]!
     complaints: [Complaint!]!
   }
 

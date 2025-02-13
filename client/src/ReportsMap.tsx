@@ -5,18 +5,55 @@ import {TileLayer, Marker, Popup, GeoJSON} from "react-leaflet"
 import { useEffect, useState } from "react"
 import { MapContainer } from "react-leaflet"
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import NeighborhoodAutocomplete from "./NeighborhoodsDropdown"
+import { generatePath, useParams, useNavigate, useSearchParams } from "react-router-dom"
+import { ReportsParams } from "./Reports"
+import {parseDateString} from "./Api"
+import ComplaintMultiSelector from "./ComplaintMultiselector"
+import DateRangeSelector, { DateRange } from "./DateRangeSelector"
+import dayjs from "dayjs"
 
 interface ReportsMapProps {
     reports?: ReportFieldsFragment[]
-    neighborhood?: NeighborhoodFieldsFragment
+    neighborhoods?: NeighborhoodFieldsFragment[]
+    complaints?: string[]
 }
 
-export const ReportsMap = ({ reports = [], neighborhood }: ReportsMapProps) => {
+export const ReportsMap = ({ reports = [], neighborhoods, complaints }: ReportsMapProps) => {
     const [userPosition, setUserPosition] = useState<L.LatLng>(new L.LatLng(51.505, -0.09))
     const [map, setMap] = useState<L.Map | null>(null)
+    
+    const params = useParams<ReportsParams>()
+    const navigate = useNavigate()
+
+    const [searchParams] = useSearchParams();
+
+    const startDate = searchParams.get('start')
+    const endDate = searchParams.get('end')
+
+    const now = new Date()
+
+    const [start,setStart] = useState<Date | undefined>(parseDateString(startDate) ||  new Date(now.getFullYear(), now.getMonth(), 1))
+    const [end,setEnd] = useState<Date | undefined>(parseDateString(endDate, true) ||  new Date(now.getFullYear(), now.getMonth()+1, 0))
+
+    console.log(start)
+    console.log(end)
+
+    const goToReports = (neighborhoods:NeighborhoodFieldsFragment[], complaints:string[]) => {
+        const url = generatePath("/reports/:neighborhoods/:complaints", {
+          neighborhoods: neighborhoods.map(x=>x.name).join("|") || "East Kensington",
+          complaints: complaints.join("|")
+        });
+
+        const pa =  new URLSearchParams()        
+        pa.append('start', (start && dayjs(start).format("YYYYMMDD")) || "")
+        pa.append('end', (end && dayjs(end).format("YYYYMMDD")) || "")
+        
+        navigate(url+"?"+pa.toString());
+      };
 
     useEffect(() => {
-        if(reports.length>0 && neighborhood==null) {
+        if(reports.length>0 && neighborhoods==null) {
             const bounds = new LatLngBounds(reports.map(x=>x.location.coordinates).map(l=>new LatLng(l.lat,l.lng)))
             if(map) {
                 map.setMaxBounds(bounds)
@@ -25,22 +62,29 @@ export const ReportsMap = ({ reports = [], neighborhood }: ReportsMapProps) => {
 
     }, [reports, map])
 
+
+
     useEffect(()=> {
-        if(neighborhood && neighborhood.geojson) {
+        if(neighborhoods && neighborhoods.length>0) {
             const lats:LatLng[] = []
-            neighborhood.geojson.coordinates.forEach(coord=> {
-                for(const k of coord) {
-                    for(const l of k) {
-                        lats.push(new LatLng(l[1],l[0]))
+            neighborhoods.forEach(neighborhood=> {
+                neighborhood.geojson.coordinates.forEach(coord=> {
+                    for(const k of coord) {
+                        for(const l of k) {
+                            lats.push(new LatLng(l[1],l[0]))
+                        }
                     }
-                }
+                })
             })
+            
             const bounds = new LatLngBounds(lats)
             if(map) {
-                map.setMaxBounds(bounds)
+                map.whenReady(()=> {
+                    map.setMaxBounds(bounds)
+                })                
             }
         }
-    }, [neighborhood])
+    }, [neighborhoods])
 
     const geoJsonStyle = {
         color: "blue", // Border color
@@ -64,15 +108,16 @@ export const ReportsMap = ({ reports = [], neighborhood }: ReportsMapProps) => {
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       />
-                {neighborhood && <GeoJSON
-        data={neighborhood.geojson}
-        style={geoJsonStyle}
-        onEachFeature={(feature, layer) => {
-          if (feature.properties?.name) {
-            layer.bindPopup(feature.properties.name); // Show name in popup
-          }
-        }}
-      />}
+                    {neighborhoods?.map(neighborhood=><GeoJSON
+                        key={neighborhood.id}
+                        data={neighborhood.geojson}
+                        style={geoJsonStyle}
+                        onEachFeature={(feature, layer) => {
+                        if (feature.properties?.name) {
+                            layer.bindPopup(feature.properties.name); // Show name in popup
+                        }
+                        }}
+                    /> )}                
                 {reports.map(x=> {
                     return <Marker 
                         position={
@@ -83,6 +128,33 @@ export const ReportsMap = ({ reports = [], neighborhood }: ReportsMapProps) => {
                     </Marker>
                 })}
             </MapContainer>
+            <Box sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              marginTop: 1,
+              gap: 1
+            }}>
+            <NeighborhoodAutocomplete         
+                defaultValues={neighborhoods||[]}
+                onSelect={(value: NeighborhoodFieldsFragment[]) => {
+                    goToReports(value, complaints || [])
+            } }/>
+            <ComplaintMultiSelector defaultValues={complaints||[]} onSelect={(complaints)=>{
+              goToReports(neighborhoods, complaints.map(x=>x.name))
+            }}/>
+            <DateRangeSelector onSelect={(range)=> {
+              setStart(range?.startDate)
+              setEnd(range?.endDate)
+              
+              goToReports(neighborhoods, complaints)
+              
+            }}
+            defaultValues={[{
+              label: "",
+              startDate: start,
+              endDate: end
+            } as DateRange]}/>
+            </Box>
             <TableContainer component={Paper}>
       <Table>
         {/* ✅ Table Head */}
@@ -105,7 +177,7 @@ export const ReportsMap = ({ reports = [], neighborhood }: ReportsMapProps) => {
                 }}/>
                 </TableCell>
               <TableCell>{complaint.location.building_number} {complaint.location.street}</TableCell>
-              <TableCell>{complaint.time}</TableCell>
+              <TableCell>{dayjs(complaint.time).format("M/DD/YY h:mm a")}</TableCell>
               <TableCell>{complaint.files.map((x,index)=><a href={x.url}>{index+1}</a>,)}</TableCell>
             </TableRow>
           ))}

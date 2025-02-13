@@ -1,14 +1,14 @@
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { getComplaints, getNeighborhood, getReports, subscribeToReports } from "./Api";
 import { ComplaintType } from "@reported/shared/src/ComplaintType";
 import {ComplaintFieldsFragment, NeighborhoodFieldsFragment, ReportFieldsFragment } from "@reported/shared/src/generated/graphql";
 import { ReportsMap } from "./ReportsMap";
 
 export type ReportsParams = {
-    complaint?: string; // Define the type parameter as a string
-    neighborhood?: string;
+    complaints?: string; // Define the type parameter as a string
+    neighborhoods?: string;
   };
 
   
@@ -17,12 +17,15 @@ export const Reports = () => {
     const params = useParams<ReportsParams>()
 
     const [reports, setReports] = useState<ReportFieldsFragment[]>([])
-    const [neighborhood, setNeighborhood] = useState<NeighborhoodFieldsFragment>()
+    const [neighborhoods, setNeighborhoods] = useState<NeighborhoodFieldsFragment[]>([])
     const [complaints, setComplaints] = useState<ComplaintFieldsFragment[]>()
-    
+    const [selectedComplaints, setSelectedComplaints] = useState<string[]>()
+
+    const [searchParams] = useSearchParams()
+    console.log(searchParams.toString())
     useEffect(() => {
         console.log("Subscribing to report updates")
-        const sub = subscribeToReports([params.neighborhood || "East Kensington"],(reports)=> {
+        const sub = subscribeToReports((params.neighborhoods || "East Kensington").split("|"),(reports)=> {
             console.log("new reports", reports)
         }, ()=> {})
         return () => {
@@ -31,19 +34,25 @@ export const Reports = () => {
     }, [params])
 
     useEffect(()=> {
-        if (!params.complaint || !params.neighborhood) {
+        if (!params.neighborhoods) {
             throw new Error("Missing required parameters.");
         }
 
         const parms = {
-            complaint: params.complaint || ComplaintType.missing_crosswalk, // Ensure it's a string
-            neighborhood: params.neighborhood || "East Kensington", // Ensure it's a string
+            complaints: params.complaints,
+            neighborhoods: params.neighborhoods || "East Kensington", // Ensure it's a string
+        }
+        
+
+        async function prepareComplaints() {
+            const complaints = (params.complaints || "").split("|") || []
+            setSelectedComplaints(complaints)
         }
 
         async function fetchReports() {
             
             try {
-                const reports = await getReports(parms);                
+                const reports = await getReports(parms, searchParams);                
                 setReports(reports)
                 // reports[0].location.street
                 return reports
@@ -54,9 +63,9 @@ export const Reports = () => {
 
         async function fetchNeighborhood() {
             try {
-                const neighborhood = await getNeighborhood(parms)
-                setNeighborhood(neighborhood)
-                return neighborhood
+                const neighborhoods = await getNeighborhood(parms)
+                setNeighborhoods(neighborhoods)
+                return neighborhoods
             } catch (error) {
                 console.error("Error fetching neighborhood:", error)
             }
@@ -75,10 +84,11 @@ export const Reports = () => {
         fetchReports();
         fetchNeighborhood();
         fetchComplaints();
+        prepareComplaints();
     },[params])
 
     return <Box>
 
-        <ReportsMap reports={reports} neighborhood={neighborhood} />
+        <ReportsMap reports={reports} complaints={selectedComplaints} neighborhoods={neighborhoods} />
     </Box>
 }

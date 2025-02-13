@@ -118,7 +118,7 @@ export type PresignedUrlInput = {
 export type Query = {
   __typename?: 'Query';
   complaints: Array<Complaint>;
-  neighborhood?: Maybe<Neighborhood>;
+  neighborhood: Array<Neighborhood>;
   neighborhoods: Array<Neighborhood>;
   report?: Maybe<Report>;
   reports?: Maybe<Array<Maybe<Report>>>;
@@ -128,7 +128,7 @@ export type Query = {
 
 
 export type QueryNeighborhoodArgs = {
-  name: Scalars['String']['input'];
+  names: Array<Scalars['String']['input']>;
 };
 
 
@@ -157,9 +157,10 @@ export type Report = {
 };
 
 export type ReportFilterInput = {
-  complaint?: InputMaybe<Scalars['String']['input']>;
+  complaints: Array<Scalars['String']['input']>;
   createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
-  neighborhood: Scalars['String']['input'];
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  neighborhoods: Array<Scalars['String']['input']>;
 };
 
 export type ReportInput = {
@@ -224,14 +225,14 @@ export type GetAllComplaintsQuery = { __typename?: 'Query', complaints: Array<{ 
 export type GetAllNeighborhoodsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAllNeighborhoodsQuery = { __typename?: 'Query', neighborhoods: Array<{ __typename?: 'Neighborhood', id: string, name: string, geojson: any }> };
+export type GetAllNeighborhoodsQuery = { __typename?: 'Query', neighborhoods: Array<{ __typename?: 'Neighborhood', id: string, name: string }> };
 
 export type GetNeighborhoodQueryVariables = Exact<{
-  name: Scalars['String']['input'];
+  names: Array<Scalars['String']['input']> | Scalars['String']['input'];
 }>;
 
 
-export type GetNeighborhoodQuery = { __typename?: 'Query', neighborhood?: { __typename?: 'Neighborhood', id: string, name: string, geojson: any } | null };
+export type GetNeighborhoodQuery = { __typename?: 'Query', neighborhood: Array<{ __typename?: 'Neighborhood', id: string, name: string, geojson: any }> };
 
 export type GetReportsForNeighborhoodQueryVariables = Exact<{
   filters: ReportFilterInput;
@@ -404,7 +405,6 @@ export const GetAllNeighborhoodsDocument = gql`
   neighborhoods {
     id
     name
-    geojson
   }
 }
     `;
@@ -441,8 +441,8 @@ export type GetAllNeighborhoodsLazyQueryHookResult = ReturnType<typeof useGetAll
 export type GetAllNeighborhoodsSuspenseQueryHookResult = ReturnType<typeof useGetAllNeighborhoodsSuspenseQuery>;
 export type GetAllNeighborhoodsQueryResult = Apollo.QueryResult<GetAllNeighborhoodsQuery, GetAllNeighborhoodsQueryVariables>;
 export const GetNeighborhoodDocument = gql`
-    query GetNeighborhood($name: String!) {
-  neighborhood(name: $name) {
+    query GetNeighborhood($names: [String!]!) {
+  neighborhood(names: $names) {
     ...NeighborhoodFields
   }
 }
@@ -460,7 +460,7 @@ export const GetNeighborhoodDocument = gql`
  * @example
  * const { data, loading, error } = useGetNeighborhoodQuery({
  *   variables: {
- *      name: // value for 'name'
+ *      names: // value for 'names'
  *   },
  * });
  */

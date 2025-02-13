@@ -1,9 +1,10 @@
 import { BuildableComplaint } from "./App";
 
 import { client } from './ApolloClient'
-import { PresignedUrlsDocument, PresignedUrlsMutation, Report, PresignedUrl, CreateReportsMutation, CreateReportsDocument, ReportInput, LocationInput, CoordinatesInput, FileInput, GetReportsForNeighborhoodQuery, GetReportsForNeighborhoodDocument, ReportFilterInput, ReportFieldsFragment, NeighborhoodFieldsFragment, GetNeighborhoodQuery, GetNeighborhoodDocument, GetAllComplaintsQuery, GetAllComplaintsDocument, ComplaintFieldsFragment, useReportCreatedSubscription, ReportCreatedSubscription, ReportCreatedDocument, SubscriptionReportCreatedForNeighborhoodsArgs, ReportCreatedForNeighborhoodsDocument, ReportCreatedForNeighborhoodsSubscription } from "@reported/shared/src/generated/graphql.ts";
+import { PresignedUrlsDocument, PresignedUrlsMutation, Report, PresignedUrl, CreateReportsMutation, CreateReportsDocument, ReportInput, LocationInput, CoordinatesInput, FileInput, GetReportsForNeighborhoodQuery, GetReportsForNeighborhoodDocument, ReportFilterInput, ReportFieldsFragment, NeighborhoodFieldsFragment, GetNeighborhoodQuery, GetNeighborhoodDocument, GetAllComplaintsQuery, GetAllComplaintsDocument, ComplaintFieldsFragment, useReportCreatedSubscription, ReportCreatedSubscription, ReportCreatedDocument, SubscriptionReportCreatedForNeighborhoodsArgs, ReportCreatedForNeighborhoodsDocument, ReportCreatedForNeighborhoodsSubscription, GetAllNeighborhoodsQuery, GetAllNeighborhoodsDocument } from "@reported/shared/src/generated/graphql.ts";
 
 import { ReportsParams } from "./Reports";
+import dayjs from "dayjs";
 
 const saveBlobToFile = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
@@ -93,12 +94,47 @@ const uploadFile = async (file: File, u: PresignedUrl): Promise<boolean> => {
     return response
 }
 
-export const getReports = async(params:ReportsParams): Promise<ReportFieldsFragment[]> => {
+export const getNeighborhoods = async(): Promise<NeighborhoodFieldsFragment[]> => {
+    const resp = await client.query<GetAllNeighborhoodsQuery>({
+        query: GetAllNeighborhoodsDocument
+    })
+    const data = [...resp.data.neighborhoods]
+    data.sort((a, b) => a.name.localeCompare(b.name))
+    return data
+}
+
+export const parseDateString = (dateString: string, end: boolean = false): Date | null  => {
+    if (!/^\d{8}(\d{6})?$/.test(dateString)) {
+        console.error("Invalid date format");
+        return null;
+    }
+
+    // Determine the format based on length
+    const format = dateString.length === 14 ? "YYYYMMDDHHmmss" : "YYYYMMDD";
+
+    // Parse with Day.js
+    let parsedDate = dayjs(dateString, format);
+
+    // If `end` is true, set to the end of the day
+    if (end && dateString.length === 8) {
+        parsedDate = parsedDate.endOf("day"); // Sets time to 23:59:59
+    }
+
+    return parsedDate.isValid() ? parsedDate.toDate() : null;
+}
+
+export const getReports = async(params:ReportsParams, searchParams:URLSearchParams): Promise<ReportFieldsFragment[]> => {
 
     const filters: ReportFilterInput = {
-        ...(params.complaint && { complaint: params.complaint }),
-        neighborhood: params.neighborhood || "Fishtown",        
+        complaints: (params.complaints || "missing crosswalk").split("|"),
+        neighborhoods: (params.neighborhoods || "Fishtown").split("|"),        
     };
+    if(searchParams.get('start')) {
+        filters.createdAfter = parseDateString(searchParams.get('start')!)        
+    }
+    if(searchParams.get('end')) {
+        filters.createdBefore = parseDateString(searchParams.get('end')!, true)
+    }
     const resp = await client.query<GetReportsForNeighborhoodQuery>({
         query: GetReportsForNeighborhoodDocument,
         variables: {
@@ -108,13 +144,13 @@ export const getReports = async(params:ReportsParams): Promise<ReportFieldsFragm
     return resp.data.reportsForNeighborhood || []
 }
 
-export const getNeighborhood = async(params:ReportsParams): Promise<NeighborhoodFieldsFragment> => {
+export const getNeighborhood = async(params:ReportsParams): Promise<NeighborhoodFieldsFragment[]> => {
 
-    const name = params.neighborhood || "East Kensington"
+    const names= (params.neighborhoods || "East Kensington").split("|")
     const resp = await client.query<GetNeighborhoodQuery>({
         query: GetNeighborhoodDocument,
         variables: {
-            name
+            names
         }
     })
     return resp.data.neighborhood!

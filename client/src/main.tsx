@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')!).render(
     <Router>
         <Routes>
           <Route path="/" element={<App/>} />
-          <Route path="/reports/:neighborhood/:complaint" element={<Reports/>}/>
+          <Route path="/reports/:neighborhoods/:complaints?" element={<Reports/>}/>
         </Routes>
     </Router>  
     </ApolloProvider>

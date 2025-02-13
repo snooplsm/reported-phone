@@ -25,7 +25,7 @@ S3File.belongsToMany(Report, {
 ReportFile.belongsTo(S3File, { foreignKey: "file_id", as: 's3_file', onDelete: "CASCADE" });
 S3File.hasMany(ReportFile, { foreignKey: "file_id", onDelete: "CASCADE" });
 
-console.log("ALL ASSOCIATIONS")
-console.log(Report.associations); // ✅ Prints all registered associations
-console.log(Location.associations);
+// console.log("ALL ASSOCIATIONS")
+// console.log(Report.associations); // ✅ Prints all registered associations
+// console.log(Location.associations);
 export { sequelize, Report, Location, S3File, ReportFile };

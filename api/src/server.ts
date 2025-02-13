@@ -4,7 +4,7 @@ import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { sequelize } from "./database";
 import { typeDefs } from "@reported/shared/src/graphql/schema";
-import { resolvers } from "./graphql/resolvers";
+import { resolversWithScalars } from "./graphql/resolversWithScalars";
 import { ApolloServerErrorCode } from "@apollo/server/errors";
 import { createServer } from "http";
 import { useServer } from 'graphql-ws/use/ws';
@@ -37,7 +37,7 @@ async function startServer() {
   };
 
   // ✅ Create Apollo Schema (Required for WebSocket support)
-  const schema: GraphQLSchema = makeExecutableSchema({ typeDefs, resolvers });
+  const schema: GraphQLSchema = makeExecutableSchema({ typeDefs, resolvers:resolversWithScalars(true) });
 
   // ✅ Create WebSocket Server
   const httpServer = createServer(app);
@@ -63,6 +63,8 @@ async function startServer() {
       }
       return formattedError;
     },
+    introspection: process.env.NODE_ENV !== 'production'
+    ,
   });
 
   await server.start();
