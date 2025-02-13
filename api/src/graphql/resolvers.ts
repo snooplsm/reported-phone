@@ -11,7 +11,7 @@ import Neighborhood from "../models/Neighborhood";
 import { complaintTypesJson } from "@reported/shared/src/ComplaintType";
 import {
    ReportFilterInput,  ReportInput,
-  } from  "@reported/shared/src/generated/graphql";
+  } from  "@reported/shared/src/generated/server/graphql";
 
 
 
