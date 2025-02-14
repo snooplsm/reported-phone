@@ -2,21 +2,15 @@ import { Model, DataTypes } from "sequelize";
 import { sequelize } from "../database.js";
 
 export class Location extends Model {
-  public id!: number;
-  public geometry?: object;
-  public street?: string;
-  public building_number?: string;
-  public city!: string;
-  public state!: string;
-  public zip!: string;
-  public readonly created!: Date;
+
   public neighborhoods?: string[];
 
   // ✅ Return coordinates inside an object
   get coordinates(): { lat: number; lng: number } {
+    const gometry = this.getDataValue("geometry")
     return {
-      lat: (this.geometry as any).coordinates[1], // Y (Latitude)
-      lng: (this.geometry as any).coordinates[0], // X (Longitude)
+      lat: (gometry as any).coordinates[1], // Y (Latitude)
+      lng: (gometry as any).coordinates[0], // X (Longitude)
     };
   }
 }

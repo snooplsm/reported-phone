@@ -69,10 +69,10 @@ export const typeDefs = gql`
   }
 
   input ReportFilterInput {
-  neighborhoods: [String!]!
+  neighborhoods: [String!]
   createdAfter: DateTime
   createdBefore: DateTime
-  complaints: [String!]!
+  complaints: [String!]
 }
 
   type Query {

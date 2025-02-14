@@ -2,11 +2,7 @@ import { Model, DataTypes } from "sequelize";
 import { sequelize } from "../database.js";
 
 export class ReportFile extends Model {
-  public id!: number;
-  public report_id!: number;
-  public file_id!: string;
-  public type!: string;
-  public readonly created!: Date
+
 }
 
 ReportFile.init(

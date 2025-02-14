@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Autocomplete, TextField, Chip } from "@mui/material";
-import { complaintTypesJson } from "@reported/shared/src/ComplaintType";
+import { complaintTypesJson } from "@reported/shared/complaint";
 
 // Assuming complaintTypesJson is imported from where ComplaintType is defined
 

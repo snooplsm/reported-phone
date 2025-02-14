@@ -1,8 +1,5 @@
 import { sequelize } from "../database.js";
-import { Report } from "../models/Report.js";
-import { Location } from "../models/Location.js";
-import { S3File } from "../models/S3File.js";
-import { ReportFile } from "../models/ReportFile.js";
+import { Report,Location, S3File, ReportFile } from "../models/index.js";
 import { v4 as uuidv4 } from "uuid";
 import { Op } from "sequelize";
 import { generatePresignedUrl } from "../s3PresignedUrl.js";
@@ -12,6 +9,7 @@ import { complaintTypesJson } from "@reported/shared/complaint";
 import {
    ReportFilterInput,  ReportInput,
   } from  "@reported/shared/server";
+  
 
 const isAWS = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 let pub: any = null; // ✅ Only initialize in local mode
@@ -97,7 +95,7 @@ export const resolvers = {
           ...(createdAfter && { created: { [Op.gte]: createdAfter } }),
           ...(createdBefore && { created: { [Op.lte]: createdBefore } }),
           ...(complaints && { complaint: { [Op.in]: complaints } }), // Make complaints a list of OR conditions
-          [Op.and]: sequelize.literal(`
+          ...(neighborhoods && { [Op.and]: sequelize.literal(`
             EXISTS (
               SELECT 1 FROM neighborhoods 
               WHERE neighborhoods.name ILIKE ANY (ARRAY[${neighborhoods
@@ -105,12 +103,14 @@ export const resolvers = {
                 .join(",")}])
               AND ST_Contains(neighborhoods.geojson, location.geometry)
             )
-          `),
+          `)})
+          ,
         }
       });
       return reports
     },
     reportsForNeighborhood: async (_: any, { filters }: { filters: ReportFilterInput }) => {
+      console.log(filters)
       const { neighborhoods, createdAfter, complaints, createdBefore } = filters;
 
       const reports =  await Report.findAllWithLocations(
@@ -118,7 +118,7 @@ export const resolvers = {
           ...(createdAfter && { created: { [Op.gte]: createdAfter } }),
           ...(createdBefore && { created: { [Op.lte]: createdBefore } }),
           ...(complaints && { complaint: { [Op.in]: complaints } }), // Make complaints a list of OR conditions
-          [Op.and]: sequelize.literal(`
+          ...(neighborhoods && {[Op.and]: sequelize.literal(`
             EXISTS (
               SELECT 1 FROM neighborhoods 
               WHERE neighborhoods.name ILIKE ANY (ARRAY[${neighborhoods
@@ -126,7 +126,12 @@ export const resolvers = {
                 .join(",")}])
               AND ST_Contains(neighborhoods.geojson, location.geometry)
             )
-          `),
+          `)})
+      });
+      reports.forEach(report => {
+        if (!report.id) {
+          console.error("ERROR: Report missing ID!", report);
+        }
       });
       pub.publish("REPORT_CREATED", reports)
       return reports

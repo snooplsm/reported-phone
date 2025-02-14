@@ -1,26 +1,14 @@
 import { Model, DataTypes } from "sequelize";
 import { sequelize } from "../database.js";
 
-export class S3File extends Model {
-    public id!: string;
-    public file_name!: string;
-    private s3_url!: string;
-    private s3_key!: string;
-    public bucket_name!: string;
-    public mime_type!: string;
-    public width?: number;
-    public height?: number;
-    public duration?: number;
-    public parent?: string;
-    public file_size!: number;
-    public readonly created!: Date;
+export class S3File extends Model {  
 
     get url(): string {
-      return this.s3_url
+      return this.getDataValue('s3_url')
     }
 
     get key(): string {
-      return this.s3_key
+      return this.getDataValue('s3_key')
     }
   }
 

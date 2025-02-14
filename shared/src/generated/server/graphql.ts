@@ -154,10 +154,10 @@ export type Report = {
 };
 
 export type ReportFilterInput = {
-  complaints: Array<Scalars['String']['input']>;
+  complaints?: InputMaybe<Array<Scalars['String']['input']>>;
   createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
-  neighborhoods: Array<Scalars['String']['input']>;
+  neighborhoods?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type ReportInput = {

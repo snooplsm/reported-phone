@@ -1,7 +1,7 @@
 import { BuildableComplaint } from "./App";
 
 import { client } from './ApolloClient'
-import { PresignedUrlsDocument, PresignedUrlsMutation, Report, PresignedUrl, CreateReportsMutation, CreateReportsDocument, ReportInput, LocationInput, CoordinatesInput, FileInput, GetReportsForNeighborhoodQuery, GetReportsForNeighborhoodDocument, ReportFilterInput, ReportFieldsFragment, NeighborhoodFieldsFragment, GetNeighborhoodQuery, GetNeighborhoodDocument, GetAllComplaintsQuery, GetAllComplaintsDocument, ComplaintFieldsFragment, useReportCreatedSubscription, ReportCreatedSubscription, ReportCreatedDocument, SubscriptionReportCreatedForNeighborhoodsArgs, ReportCreatedForNeighborhoodsDocument, ReportCreatedForNeighborhoodsSubscription, GetAllNeighborhoodsQuery, GetAllNeighborhoodsDocument } from "@reported/shared/src/generated/graphql.ts";
+import { PresignedUrlsDocument, PresignedUrlsMutation, Report, PresignedUrl, CreateReportsMutation, CreateReportsDocument, ReportInput, LocationInput, CoordinatesInput, FileInput, GetReportsForNeighborhoodQuery, GetReportsForNeighborhoodDocument, ReportFilterInput, ReportFieldsFragment, NeighborhoodFieldsFragment, GetNeighborhoodQuery, GetNeighborhoodDocument, GetAllComplaintsQuery, GetAllComplaintsDocument, ComplaintFieldsFragment, useReportCreatedSubscription, ReportCreatedSubscription, ReportCreatedDocument, SubscriptionReportCreatedForNeighborhoodsArgs, ReportCreatedForNeighborhoodsDocument, ReportCreatedForNeighborhoodsSubscription, GetAllNeighborhoodsQuery, GetAllNeighborhoodsDocument } from "@reported/shared/client";
 
 import { ReportsParams } from "./Reports";
 import dayjs from "dayjs";
@@ -126,7 +126,7 @@ export const parseDateString = (dateString: string, end: boolean = false): Date 
 export const getReports = async(params:ReportsParams, searchParams:URLSearchParams): Promise<ReportFieldsFragment[]> => {
 
     const filters: ReportFilterInput = {
-        complaints: (params.complaints || "missing crosswalk").split("|"),
+        complaints: params.complaints ? params.complaints.split("|") : undefined,
         neighborhoods: (params.neighborhoods || "Fishtown").split("|"),        
     };
     if(searchParams.get('start')) {

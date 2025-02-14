@@ -1,7 +1,7 @@
 import { Box, Paper, Typography } from "@mui/material"
 import { ChangeEvent, useRef } from "react"
 import { exifGetter, UsableExif } from "./FileUtils"
-import { ComplaintType } from "@reported/shared/src/ComplaintType";
+import { ComplaintType } from "@reported/shared/complaint";
 
 export interface Complaint {
     type: ComplaintType

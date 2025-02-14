@@ -4,11 +4,6 @@ import { S3File } from "./S3File.js";
 import { Location } from "./Location.js"
 
 export class Report extends Model {
-  public id!: number;
-  public complaint!: string;
-  public time!: Date;
-  public location_id!: number;
-  public readonly created!: Date;
 
   static async findAllWithLocations(where: WhereOptions<Report> = {}) {
     return await Report.findAll({
