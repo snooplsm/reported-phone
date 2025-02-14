@@ -3,6 +3,9 @@
     "version": "1.0.0",
     "description": "Shared utilities and components for multiple projects",
     "private": true,
+    "type": "module",
+    "types": "dist/index.d.ts",
+    "main": "dist/index.js",
     "scripts": {
         "build": "tsc",
         "test": "jest",
@@ -18,5 +21,26 @@
         "jest": "^29.6.1",
         "ts-node": "^10.9.2",
         "typescript": "^5.7.3"
+    },
+    "exports": {
+    "./graphql/schema": {
+      "import": "./dist/graphql/schema.js",
+      "types": "./dist/graphql/schema.d.ts"
+    },
+    "./client": {
+      "import": "./dist/generated/client/graphql.js",
+      "types": "./dist/generated/client/graphql.d.ts"
+    },
+    "./server": {
+      "import": "./dist/generated/server/graphql.js",
+      "types": "./dist/generated/server/graphql.d.ts"
+    },
+    "./complaint": {
+        "import": "./dist/ComplaintType.js",
+        "types":"./dist/ComplaintType.d.ts"
+    }
+  },
+    "dependencies": {
+        "@apollo/client": "^3.13.0"
     }
 }

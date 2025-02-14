@@ -1,8 +1,8 @@
-import { sequelize } from "../database";
-import { Report } from "./Report";
-import { Location } from "./Location";
-import { S3File } from "./S3File";
-import { ReportFile } from "./ReportFile";
+import { sequelize } from "../database.js";
+import { Report } from "./Report.js";
+import { Location } from "./Location.js";
+import { S3File } from "./S3File.js";
+import { ReportFile } from "./ReportFile.js";
 
 Report.belongsTo(Location, { foreignKey: "location_id", onDelete: "CASCADE" });
 Location.hasMany(Report, { foreignKey: "location_id", onDelete: "CASCADE" });

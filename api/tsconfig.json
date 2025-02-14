@@ -8,7 +8,15 @@
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true, 
-    "skipLibCheck": true
-  }
+    "allowSyntheticDefaultImports": true,     
+    // "allowImportingTsExtensions": true,    
+    // "noEmit": true,
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+  },
+  "include": ["src"],   // ✅ Moved outside compilerOptions
+  "exclude": ["node_modules", "dist"] // ✅ Moved outside compilerOptions
 }

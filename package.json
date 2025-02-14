@@ -4,6 +4,7 @@
     "api",
     "client",
     "data",
+    "shared",
     "s3/lambdas/resizer",
     "s3/lambdas/graphql"
   ]

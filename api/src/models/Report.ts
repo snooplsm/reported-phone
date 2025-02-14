@@ -1,7 +1,7 @@
 import { DataTypes, Model, Sequelize, WhereOptions } from "sequelize";
-import { sequelize } from "../database";
-import { S3File } from "./S3File";
-import { Location } from "./Location"
+import { sequelize } from "../database.js";
+import { S3File } from "./S3File.js";
+import { Location } from "./Location.js"
 
 export class Report extends Model {
   public id!: number;

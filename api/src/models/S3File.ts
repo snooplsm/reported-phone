@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import { sequelize } from "../database";
+import { sequelize } from "../database.js";
 
 export class S3File extends Model {
     public id!: string;

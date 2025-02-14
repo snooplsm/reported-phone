@@ -1,7 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import { sequelize } from "../database";
-import { Report } from "./Report";
-import { S3File } from "./S3File";
+import { sequelize } from "../database.js";
 
 export class ReportFile extends Model {
   public id!: number;

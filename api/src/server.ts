@@ -2,20 +2,18 @@ import express, { Application, json } from "express";
 import cors from "cors";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
-import { sequelize } from "./database";
-import { typeDefs } from "@reported/shared/src/graphql/schema";
-import { resolversWithScalars } from "./graphql/resolversWithScalars";
+import { sequelize } from "./database.js";
+import { typeDefs } from "@reported/shared/graphql/schema";
+import { resolversWithScalars } from "./graphql/resolversWithScalars.js";
 import { ApolloServerErrorCode } from "@apollo/server/errors";
+import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import { createServer } from "http";
 import { useServer } from 'graphql-ws/use/ws';
 import { WebSocketServer } from "ws";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { GraphQLSchema } from "graphql";
-import dotenv from "dotenv";
-import { UserInterface } from "./UserInterface";
-import "./models";
-
-dotenv.config();
+import { UserInterface } from "./UserInterface.js";
+import "./models/index.js";
 
 const PORT = (process.env.PORT && parseInt(process.env.PORT)) || 3000;
 
@@ -44,6 +42,7 @@ async function startServer() {
   const wsServer = new WebSocketServer({ server: httpServer, path: "/graphql" });
 
   useServer({ schema, context: async () => ({ user: null }) }, wsServer);
+  const isProduction = process.env.NODE_ENV === "production";
 
   // ✅ Create Apollo Server
   const server = new ApolloServer<AppContext>({
@@ -63,8 +62,8 @@ async function startServer() {
       }
       return formattedError;
     },
-    introspection: process.env.NODE_ENV !== 'production'
-    ,
+    introspection: !isProduction,
+    plugins: isProduction ? [ApolloServerPluginLandingPageDisabled()] : []
   });
 
   await server.start();

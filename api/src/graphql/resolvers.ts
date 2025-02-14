@@ -1,25 +1,22 @@
-import { sequelize } from "../database";
-import { Report } from "../models/Report";
-import { Location } from "../models/Location";
-import { S3File } from "../models/S3File";
-import { ReportFile } from "../models/ReportFile";
+import { sequelize } from "../database.js";
+import { Report } from "../models/Report.js";
+import { Location } from "../models/Location.js";
+import { S3File } from "../models/S3File.js";
+import { ReportFile } from "../models/ReportFile.js";
 import { v4 as uuidv4 } from "uuid";
 import { Op } from "sequelize";
-import { generatePresignedUrl } from "../s3PresignedUrl";
+import { generatePresignedUrl } from "../s3PresignedUrl.js";
 
-import Neighborhood from "../models/Neighborhood";
-import { complaintTypesJson } from "@reported/shared/src/ComplaintType";
+import Neighborhood from "../models/Neighborhood.js";
+import { complaintTypesJson } from "@reported/shared/complaint";
 import {
    ReportFilterInput,  ReportInput,
-  } from  "@reported/shared/src/generated/server/graphql";
-
-
-
+  } from  "@reported/shared/server";
 
 const isAWS = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 let pub: any = null; // ✅ Only initialize in local mode
 
-const { PubSub, withFilter } = isAWS ? {} : require("graphql-subscriptions");
+import { PubSub, withFilter } from "graphql-subscriptions"
 
 let Subscription:object = {}
 if (!isAWS) {  
