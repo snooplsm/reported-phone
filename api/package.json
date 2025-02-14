@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "doppler run -- nodemon --exec tsx watch src/server.ts",
     "start": "NODE_ENV=production doppler run -- node dist/server.js",
-    "build": "NODE_ENV=production doppler run -- tsc --build --diagnostics --verbose --listFiles --traceResolution"
+    "build": "NODE_ENV=production doppler run -- tsc"
   },
   "keywords": [],
   "author": "",
