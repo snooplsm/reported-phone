@@ -4,7 +4,8 @@ import { S3File } from "./S3File.js";
 import { Location } from "./Location.js"
 
 export class Report extends Model {
-
+  declare id: number;
+  
   static async findAllWithLocations(where: WhereOptions<Report> = {}) {
     return await Report.findAll({
       where, // ✅ Uses `{}` if no condition is passed

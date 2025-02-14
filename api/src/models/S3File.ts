@@ -3,6 +3,8 @@ import { sequelize } from "../database.js";
 
 export class S3File extends Model {  
 
+    declare id:number
+
     get url(): string {
       return this.getDataValue('s3_url')
     }
