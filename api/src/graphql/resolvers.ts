@@ -7,35 +7,47 @@ import { generatePresignedUrl } from "../s3PresignedUrl.js";
 import Neighborhood from "../models/Neighborhood.js";
 import { complaintTypesJson } from "@reported/shared/complaint";
 import {
+  ReportFieldsFragment,
    ReportFilterInput,  ReportInput,
   } from  "@reported/shared/server";
   
 
 const isAWS = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-let pub: any = null; // ✅ Only initialize in local mode
+const pub = new PubSub()
 
 import { PubSub, withFilter } from "graphql-subscriptions"
 
 let Subscription:object = {}
 if (!isAWS) {  
-    pub = new PubSub();
     Subscription = {
         reportCreated: {
-          subscribe: () => pub!.asyncIterator(["REPORT_CREATED"]),
+          subscribe: () => {
+            console.log("rub")
+            return pub.asyncIterableIterator(["REPORT_CREATED"])
+          },
           resolve: (payload: any) => {
             console.log("🚀 Report Created Event:", payload);
-            return payload; // ✅ Should return a single object, NOT an array
+            return payload.reportCreated; // ✅ Should return a single object, NOT an array
           },
         },
         reportCreatedForNeighborhoods: {
           subscribe: withFilter(
-            () => pub!.asyncIterator(["REPORT_CREATED_FOR_NEIGHBORHOODS"]),
+            () => pub!.asyncIterableIterator(["REPORT_CREATED_FOR_NEIGHBORHOODS"]),
             (payload: any, variables: any) => {
-              console.log("payload", payload);
-              console.log("variables", variables);
-              return true; // ✅ Apply custom filtering logic here
+              const { neighborhoods } = variables;
+
+          if (!neighborhoods || neighborhoods.length === 0) return true;
+            return payload.reportCreatedForNeighborhoods.some((report:ReportFieldsFragment) =>
+              report.location?.neighborhoods?.some(n => neighborhoods.includes(n))
+            );
             }
           ),
+          resolve: (payload:any, variables:any) => {
+            const { neighborhoods } = variables;
+            return payload.reportCreatedForNeighborhoods.filter((x: ReportFieldsFragment) =>
+              x.location.neighborhoods?.some(n => neighborhoods.includes(n)) 
+            );
+          }
         },
     }
   } else {
@@ -133,7 +145,9 @@ export const resolvers = {
           console.error("ERROR: Report missing ID!", report);
         }
       });
-      pub.publish("REPORT_CREATED", reports)
+      pub.publish("REPORT_CREATED", {
+        reportCreated: reports
+      })
       return reports
     }
   },
@@ -222,12 +236,12 @@ export const resolvers = {
             const fileId = uuidv4();
             const url = new URL(file.url)
             url.search = ""
-            const s3File = await S3File.create(
+            const [s3File] = await S3File.upsert(
               {
-                id: fileId,
+                id: fileId, // If a record exists, this field is ignored
                 file_name: file.file_name,
                 s3_url: url.toString(),
-                s3_key: file.key,
+                s3_key: file.key, // Unique constraint field
                 bucket_name: file.bucket_name,
                 mime_type: file.mime_type,
                 width: file.width || null,
@@ -236,7 +250,10 @@ export const resolvers = {
                 parent: file.parent || null,
                 file_size: file.file_size
               },
-              { transaction }
+              {
+                transaction, // ✅ Transaction support
+                conflictFields: ['s3_key'], // ✅ PostgreSQL-specific option
+              }
             );
 
             await ReportFile.create(
@@ -269,6 +286,9 @@ export const resolvers = {
           }
         });      
         setImmediate(async () => {
+          pub.publish("REPORT_CREATED", {
+            reportCreated: reported
+          })
           const reportsByNeighborhood = reported.reduce((acc, report) => {
             const neighborhoods = (report.get("location") as Location)?.neighborhoods || [];
           

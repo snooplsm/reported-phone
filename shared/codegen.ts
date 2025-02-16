@@ -11,7 +11,10 @@ const config: CodegenConfig = {
         "typescript",
         "typescript-operations",
         "typescript-react-apollo",
-      ]
+      ],
+      config: {
+        gqlImport: "graphql-tag#gql" // 👈 Force import from `graphql-tag`
+      }
     },
     "src/generated/server/graphql.ts": {
       plugins: [

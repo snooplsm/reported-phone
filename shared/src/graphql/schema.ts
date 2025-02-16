@@ -99,7 +99,7 @@ export const typeDefs = gql`
 
   type Subscription {
     reportCreated: [Report!]!
-    reportCreatedForNeighborhoods(neighborhoods: [String!]!): [Report!]!
+    reportCreatedForNeighborhoods(neighborhoods: [String!]): [Report!]!
   }
 
   input ReportInput {

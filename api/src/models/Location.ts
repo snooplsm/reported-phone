@@ -4,8 +4,8 @@ import { sequelize } from "../database.js";
 export class Location extends Model {
 
   declare id:number
-  
-  public neighborhoods?: string[];
+
+  declare neighborhoods?: string[];
 
   // ✅ Return coordinates inside an object
   get coordinates(): { lat: number; lng: number } {
@@ -62,6 +62,7 @@ Location.init(
   {
     sequelize,
     modelName: "location",
+    tableName: "locations",
     timestamps: false,
   }
 );

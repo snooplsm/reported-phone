@@ -70,11 +70,7 @@ async function startServer() {
 
   app.use("/graphql", expressMiddleware(server, { context }));
 
-  // ✅ Sync Database & Start HTTP + WebSocket Server
-  await sequelize.sync().catch((error) => {
-    console.error("❌ Database sync failed:", error);
-    process.exit(1);
-  });
+  // ✅ Start HTTP + WebSocket Server
 
   httpServer.listen(PORT, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);

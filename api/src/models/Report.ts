@@ -5,7 +5,7 @@ import { Location } from "./Location.js"
 
 export class Report extends Model {
   declare id: number;
-  
+
   static async findAllWithLocations(where: WhereOptions<Report> = {}) {
     return await Report.findAll({
       where, // ✅ Uses `{}` if no condition is passed
@@ -41,7 +41,7 @@ Report.init(
     location_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: "location", key: "id" }, // Foreign key reference
+      references: { model: "locations", key: "id" }, // Foreign key reference
       onDelete: "CASCADE",
     },
     created: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },

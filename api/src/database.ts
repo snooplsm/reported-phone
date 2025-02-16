@@ -9,3 +9,12 @@ export const sequelize = new Sequelize({
   port: Number(process.env.DB_PORT) || 5432,  
   logging: false
 });
+
+(async () => {
+  sequelize.sync({ alter: true }).then(()=> {
+
+  }).catch((error)=> {
+    console.error("❌ Database sync failed:", error);
+  process.exit(1);
+  })
+})();

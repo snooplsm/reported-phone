@@ -191,7 +191,7 @@ export type Subscription = {
 
 
 export type SubscriptionReportCreatedForNeighborhoodsArgs = {
-  neighborhoods: Array<Scalars['String']['input']>;
+  neighborhoods?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type ComplaintFieldsFragment = { __typename?: 'Complaint', name: string };

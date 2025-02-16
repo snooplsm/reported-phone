@@ -3,6 +3,10 @@ import { Report } from "./Report.js";
 import { Location } from "./Location.js";
 import { S3File } from "./S3File.js";
 import { ReportFile } from "./ReportFile.js";
+import { Vehicle } from "./Vehicle.js";
+import { ReportsVehicles } from "./ReportsVehicles.js"
+import { RideshareBase } from "./RideshareBase.js";
+import { VehiclesRideshares } from "./VehiclesRideshares.js";
 
 Report.belongsTo(Location, { foreignKey: "location_id", onDelete: "CASCADE" });
 Location.hasMany(Report, { foreignKey: "location_id", onDelete: "CASCADE" });
@@ -25,7 +29,15 @@ S3File.belongsToMany(Report, {
 ReportFile.belongsTo(S3File, { foreignKey: "file_id", as: 's3_file', onDelete: "CASCADE" });
 S3File.hasMany(ReportFile, { foreignKey: "file_id", onDelete: "CASCADE" });
 
-// console.log("ALL ASSOCIATIONS")
-// console.log(Report.associations); // ✅ Prints all registered associations
-// console.log(Location.associations);
-export { sequelize, Report, Location, S3File, ReportFile };
+Vehicle.belongsToMany(Report, { through: ReportsVehicles, foreignKey: "vehicle_id" });
+Report.belongsToMany(Vehicle, { through: ReportsVehicles, foreignKey: "report_id" });
+
+// 🚕 Many-to-One: VehiclesRideshares → Vehicles
+VehiclesRideshares.belongsTo(Vehicle, { foreignKey: "vehicle_id", onDelete: "CASCADE" });
+Vehicle.hasMany(VehiclesRideshares, { foreignKey: "vehicle_id" });
+
+// 🚖 Many-to-One: VehiclesRideshares → RideshareBase
+VehiclesRideshares.belongsTo(RideshareBase, { foreignKey: "base_id", onDelete: "SET NULL" });
+RideshareBase.hasMany(VehiclesRideshares, { foreignKey: "base_id" });
+
+export { sequelize, Report, Location, S3File, ReportFile, Vehicle, ReportsVehicles, RideshareBase, VehiclesRideshares };

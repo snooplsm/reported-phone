@@ -27,7 +27,8 @@
         },
         "./client": {
             "import": "./dist/generated/client/graphql.js",
-            "types": "./dist/generated/client/graphql.d.ts"
+            "types": "./dist/generated/client/graphql.d.ts",
+            "default": "./dist/generated/client/graphql.js"
         },
         "./server": {
             "import": "./dist/generated/server/graphql.js",

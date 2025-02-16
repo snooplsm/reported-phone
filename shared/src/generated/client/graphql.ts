@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from 'graphql-tag';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -194,7 +194,7 @@ export type Subscription = {
 
 
 export type SubscriptionReportCreatedForNeighborhoodsArgs = {
-  neighborhoods: Array<Scalars['String']['input']>;
+  neighborhoods?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type ComplaintFieldsFragment = { __typename?: 'Complaint', name: string };
